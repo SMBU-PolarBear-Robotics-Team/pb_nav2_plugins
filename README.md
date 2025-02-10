@@ -105,7 +105,6 @@ local_costmap:
         observation_sources: terrain_map
         terrain_map:
           topic: /terrain_map
-          max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: "PointCloud2"
