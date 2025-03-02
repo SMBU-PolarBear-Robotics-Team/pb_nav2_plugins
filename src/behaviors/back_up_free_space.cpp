@@ -15,8 +15,6 @@
 
 #include "pb_nav2_plugins/behaviors/back_up_free_space.hpp"
 
-#include <cmath>
-
 namespace pb_nav2_behaviors
 {
 
@@ -28,24 +26,15 @@ void BackUpFreeSpace::onConfigure()
   }
 
   nav2_util::declare_parameter_if_not_declared(node, "global_frame", rclcpp::ParameterValue("map"));
-  nav2_util::declare_parameter_if_not_declared(node, "robot_radius", rclcpp::ParameterValue(0.1));
   nav2_util::declare_parameter_if_not_declared(node, "max_radius", rclcpp::ParameterValue(1.0));
   nav2_util::declare_parameter_if_not_declared(
-    node, "service_name", rclcpp::ParameterValue(std::string("local_costmap/get_costmap")));
-  nav2_util::declare_parameter_if_not_declared(node, "free_threshold", rclcpp::ParameterValue(5));
+    node, "service_name", rclcpp::ParameterValue("local_costmap/get_costmap"));
   nav2_util::declare_parameter_if_not_declared(node, "visualize", rclcpp::ParameterValue(false));
 
   node->get_parameter("global_frame", global_frame_);
-  node->get_parameter("robot_radius", robot_radius_);
   node->get_parameter("max_radius", max_radius_);
   node->get_parameter("service_name", service_name_);
-  node->get_parameter("free_threshold", free_threshold_);
   node->get_parameter("visualize", visualize_);
-
-  if (max_radius_ < robot_radius_) {
-    RCLCPP_WARN(logger_, "max_radius < robot_radius. Adjusting max_radius.");
-    max_radius_ = robot_radius_;
-  }
 
   costmap_client_ = node->create_client<nav2_msgs::srv::GetCostmap>(service_name_);
 

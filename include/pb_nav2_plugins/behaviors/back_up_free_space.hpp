@@ -96,8 +96,7 @@ protected:
   // parameters
   std::string service_name_;
   double twist_x_, twist_y_;
-  double max_radius_, robot_radius_;
-  int free_threshold_;
+  double max_radius_;
   bool visualize_;
 };
 
