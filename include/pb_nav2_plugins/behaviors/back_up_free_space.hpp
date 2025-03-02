@@ -79,20 +79,20 @@ protected:
   std::vector<geometry_msgs::msg::Point> gatherFreePoints(
     const nav2_msgs::msg::Costmap & costmap, geometry_msgs::msg::Pose2D pose, float radius);
 
-  float calculateSafety(
-    const nav2_msgs::msg::Costmap & costmap, geometry_msgs::msg::Pose2D pose, float angle,
-    float radius);
-
   float findBestDirection(
     const nav2_msgs::msg::Costmap & costmap, geometry_msgs::msg::Pose2D pose, float start_angle,
     float end_angle, float radius, float angle_increment);
 
   void visualize(const geometry_msgs::msg::Point & target_point);
 
+  void visualizeline(
+    geometry_msgs::msg::Pose2D pose, float radius, float first_safe_angle, float last_unsafe_angle);
+
   rclcpp::Client<nav2_msgs::srv::GetCostmap>::SharedPtr costmap_client_;
   std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<visualization_msgs::msg::MarkerArray>>
     marker_pub_;
-
+  std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<visualization_msgs::msg::MarkerArray>>
+    marker_pub_line_;
   // parameters
   std::string service_name_;
   double twist_x_, twist_y_;
