@@ -42,10 +42,6 @@ void BackUpFreeSpace::onConfigure()
     marker_pub_ = node->template create_publisher<visualization_msgs::msg::MarkerArray>(
       "back_up_free_space_markers", 1);
     marker_pub_->on_activate();
-
-    marker_pub_line_ = node->template create_publisher<visualization_msgs::msg::MarkerArray>(
-      "back_up_free_space_line", 1);
-    marker_pub_line_->on_activate();
   }
 }
 
@@ -53,7 +49,6 @@ void BackUpFreeSpace::onCleanup()
 {
   costmap_client_.reset();
   marker_pub_.reset();
-  marker_pub_line_.reset();
 }
 
 nav2_behaviors::Status BackUpFreeSpace::onRun(
@@ -107,13 +102,6 @@ nav2_behaviors::Status BackUpFreeSpace::onRun(
   }
   RCLCPP_WARN(
     logger_, "backing up %f meters towards free space at angle %f", command_x_, best_angle);
-
-  if (visualize_) {
-    geometry_msgs::msg::Point target_point;
-    target_point.x = initial_pose_.pose.position.x + command_x_ * std::cos(best_angle);
-    target_point.y = initial_pose_.pose.position.y + command_x_ * std::sin(best_angle);
-    visualize(target_point);
-  }
 
   return nav2_behaviors::Status::SUCCEEDED;
 }
@@ -235,8 +223,11 @@ float BackUpFreeSpace::findBestDirection(
     }
   }
   best_angle = (final_safe_angle + final_unsafe_angle) / 2.0f;
-  RCLCPP_WARN(logger_, "first %f last%f", final_safe_angle, final_unsafe_angle);
-  visualizeline(pose, radius, final_safe_angle, final_unsafe_angle);
+
+  if (visualize_) {
+    visualize(pose, radius, final_safe_angle, final_unsafe_angle);
+  }
+
   return best_angle;
 }
 
@@ -260,71 +251,89 @@ std::vector<geometry_msgs::msg::Point> BackUpFreeSpace::gatherFreePoints(
   return results;
 }
 
-void BackUpFreeSpace::visualize(const geometry_msgs::msg::Point & target_point)
-{
-  visualization_msgs::msg::MarkerArray markers;
-
-  // Marker for target point
-  visualization_msgs::msg::Marker target_marker;
-  target_marker.header.frame_id = global_frame_;
-  target_marker.header.stamp = clock_->now();
-  target_marker.ns = "target_point";
-  target_marker.id = 0;
-  target_marker.type = visualization_msgs::msg::Marker::SPHERE;
-  target_marker.action = visualization_msgs::msg::Marker::ADD;
-  target_marker.pose.position = target_point;
-  target_marker.pose.orientation.w = 1.0;
-  target_marker.scale.x = 0.2;
-  target_marker.scale.y = 0.2;
-  target_marker.scale.z = 0.2;
-  target_marker.color.r = 1.0;
-  target_marker.color.g = 0.0;
-  target_marker.color.b = 0.0;
-  target_marker.color.a = 1.0;
-  markers.markers.push_back(target_marker);
-
-  marker_pub_->publish(markers);
-}
-
-void BackUpFreeSpace::visualizeline(
+void BackUpFreeSpace::visualize(
   geometry_msgs::msg::Pose2D pose, float radius, float first_safe_angle, float last_unsafe_angle)
 {
   visualization_msgs::msg::MarkerArray markers;
-  // Marker for first safe ray
-  visualization_msgs::msg::Marker safe_ray;
-  safe_ray.header.frame_id = global_frame_;
-  safe_ray.header.stamp = clock_->now();
-  safe_ray.ns = "rays";
-  safe_ray.id = 1;
-  safe_ray.type = visualization_msgs::msg::Marker::ARROW;
-  safe_ray.action = visualization_msgs::msg::Marker::ADD;
-  safe_ray.pose.orientation.w = 1.0;
-  safe_ray.scale.x = 0.1;
-  safe_ray.scale.y = 0.2;
-  safe_ray.scale.z = 0.2;
-  safe_ray.color.a = 1.0;
-  safe_ray.color.r = 0.0;
-  safe_ray.color.g = 1.0;
-  safe_ray.color.b = 0.0;
-  safe_ray.points.resize(2);
-  safe_ray.points[0].x = pose.x;
-  safe_ray.points[0].y = pose.y;
-  safe_ray.points[0].z = 0;
-  safe_ray.points[1].x = pose.x + radius * cos(first_safe_angle);
-  safe_ray.points[1].y = pose.y + radius * sin(first_safe_angle);
-  safe_ray.points[1].z = 0;
-  markers.markers.push_back(safe_ray);
 
-  // Marker for first unsafe ray
-  visualization_msgs::msg::Marker unsafe_ray = safe_ray;
-  unsafe_ray.id = 2;
-  unsafe_ray.color.r = 1.0;
-  unsafe_ray.color.g = 0.0;
-  unsafe_ray.color.b = 0.0;
-  unsafe_ray.points[1].x = pose.x + radius * cos(last_unsafe_angle);
-  unsafe_ray.points[1].y = pose.y + radius * sin(last_unsafe_angle);
-  markers.markers.push_back(unsafe_ray);
-  marker_pub_line_->publish(markers);
+  visualization_msgs::msg::Marker sector_marker;
+  sector_marker.header.frame_id = global_frame_;
+  sector_marker.header.stamp = clock_->now();
+  sector_marker.ns = "direction";
+  sector_marker.id = 0;
+  sector_marker.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
+  sector_marker.action = visualization_msgs::msg::Marker::ADD;
+  sector_marker.scale.x = 1.0;
+  sector_marker.scale.y = 1.0;
+  sector_marker.scale.z = 1.0;
+  sector_marker.color.r = 0.0f;
+  sector_marker.color.g = 1.0f;
+  sector_marker.color.b = 0.0f;
+  sector_marker.color.a = 0.2f;
+
+  const float angle_step = 0.05f;
+  for (float angle = first_safe_angle; angle <= last_unsafe_angle; angle += angle_step) {
+    const float next_angle = std::min(angle + angle_step, last_unsafe_angle);
+
+    geometry_msgs::msg::Point origin;
+    origin.x = pose.x;
+    origin.y = pose.y;
+    origin.z = 0.0;
+
+    geometry_msgs::msg::Point p1;
+    p1.x = pose.x + radius * std::cos(angle);
+    p1.y = pose.y + radius * std::sin(angle);
+    p1.z = 0.0;
+
+    geometry_msgs::msg::Point p2;
+    p2.x = pose.x + radius * std::cos(next_angle);
+    p2.y = pose.y + radius * std::sin(next_angle);
+    p2.z = 0.0;
+
+    sector_marker.points.push_back(origin);
+    sector_marker.points.push_back(p1);
+    sector_marker.points.push_back(p2);
+  }
+  markers.markers.push_back(sector_marker);
+
+  auto create_arrow = [&](float angle, int id, float r, float g, float b) {
+    visualization_msgs::msg::Marker arrow;
+    arrow.header.frame_id = global_frame_;
+    arrow.header.stamp = clock_->now();
+    arrow.ns = "direction";
+    arrow.id = id;
+    arrow.type = visualization_msgs::msg::Marker::ARROW;
+    arrow.action = visualization_msgs::msg::Marker::ADD;
+    arrow.scale.x = 0.05;
+    arrow.scale.y = 0.1;
+    arrow.scale.z = 0.1;
+    arrow.color.r = r;
+    arrow.color.g = g;
+    arrow.color.b = b;
+    arrow.color.a = 1.0;
+
+    geometry_msgs::msg::Point start;
+    start.x = pose.x;
+    start.y = pose.y;
+    start.z = 0.0;
+
+    geometry_msgs::msg::Point end;
+    end.x = start.x + radius * std::cos(angle);
+    end.y = start.y + radius * std::sin(angle);
+    end.z = 0.0;
+
+    arrow.points.push_back(start);
+    arrow.points.push_back(end);
+    return arrow;
+  };
+
+  markers.markers.push_back(create_arrow(first_safe_angle, 1, 0.0f, 0.0f, 1.0f));
+  markers.markers.push_back(create_arrow(last_unsafe_angle, 2, 0.0f, 0.0f, 1.0f));
+
+  const float best_angle = (first_safe_angle + last_unsafe_angle) / 2.0f;
+  markers.markers.push_back(create_arrow(best_angle, 3, 0.0f, 1.0f, 0.0f));
+
+  marker_pub_->publish(markers);
 }
 
 }  // namespace pb_nav2_behaviors

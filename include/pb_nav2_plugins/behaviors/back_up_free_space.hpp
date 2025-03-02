@@ -83,19 +83,16 @@ protected:
     const nav2_msgs::msg::Costmap & costmap, geometry_msgs::msg::Pose2D pose, float start_angle,
     float end_angle, float radius, float angle_increment);
 
-  void visualize(const geometry_msgs::msg::Point & target_point);
-
-  void visualizeline(
+  void visualize(
     geometry_msgs::msg::Pose2D pose, float radius, float first_safe_angle, float last_unsafe_angle);
 
   rclcpp::Client<nav2_msgs::srv::GetCostmap>::SharedPtr costmap_client_;
   std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<visualization_msgs::msg::MarkerArray>>
     marker_pub_;
-  std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<visualization_msgs::msg::MarkerArray>>
-    marker_pub_line_;
+  double twist_x_, twist_y_;
+
   // parameters
   std::string service_name_;
-  double twist_x_, twist_y_;
   double max_radius_;
   bool visualize_;
 };
