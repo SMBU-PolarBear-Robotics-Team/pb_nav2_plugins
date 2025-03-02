@@ -102,9 +102,7 @@ nav2_behaviors::Status BackUpFreeSpace::onRun(
 
   // Find the best direction to back up
   float best_angle = findBestDirection(costmap, pose, -M_PI, M_PI, max_radius_, M_PI / 32.0);
-  // best_angle = findBestDirection(
-  //   costmap, pose, best_angle - M_PI / 8, best_angle + M_PI / 8, max_radius_, M_PI / 16);
-  // best_angle = 0.0;
+
   // Calculate move command
   twist_x_ = std::cos(best_angle) * command->speed;
   twist_y_ = std::sin(best_angle) * command->speed;
