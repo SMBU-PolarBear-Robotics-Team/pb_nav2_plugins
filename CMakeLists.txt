@@ -19,7 +19,6 @@ ament_auto_add_library(pb_back_up_frees_space_behavior SHARED
 )
 
 ament_auto_add_library(layers SHARED
-  src/layers/intensity_obstacle_layer.cpp
   src/layers/intensity_voxel_layer.cpp
 )
 

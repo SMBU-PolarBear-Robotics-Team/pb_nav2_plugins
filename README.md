@@ -69,13 +69,13 @@ ros__parameters:
 
 ### 2.2 Layers
 
-#### 2.2.1 IntensityObstacleLayer
+#### 2.2.1 IntensityVoxelLayer
 
-`IntensityObstacleLayer` 是一个用于处理点云数据中障碍物强度信息的代价地图层。它可以根据点云数据中的强度值来标记障碍物，并将这些障碍物信息添加到代价地图中，本插件推荐配合 [terrain_analysis](https://github.com/SMBU-PolarBear-Robotics-Team/terrain_analysis) 功能包使用。
+`IntensityVoxelLayer` 是一个用于处理点云数据中障碍物强度信息的代价地图层。它可以根据点云数据中的强度值来标记障碍物，并将这些障碍物信息添加到代价地图中，本插件推荐配合 [terrain_analysis](https://github.com/SMBU-PolarBear-Robotics-Team/terrain_analysis) 功能包使用。
 
 **Parameters:**
 
-Common to [costmap-plugins/obstacle.html](https://docs.nav2.org/configuration/packages/costmap-plugins/obstacle.html)。
+Common to [costmap-plugins/voxel.html](https://docs.nav2.org/configuration/packages/costmap-plugins/voxel.html)。
 
 主要区别在于添加了 `min_obstacle_intensity` 和 `max_obstacle_intensity` 参数，注意此参数使用域在 `obstacle_layer` 下，而非 `observation_sources` 下。
 
@@ -87,7 +87,7 @@ local_costmap:
     ros__parameters:
       use_sim_time: true
       update_frequency: 10.0
-      publish_frequency: 10.0
+      publish_frequency: 5.0
       global_frame: odom
       robot_base_frame: gimbal_yaw_fake
       rolling_window: true
@@ -95,87 +95,31 @@ local_costmap:
       height: 5
       resolution: 0.05
       robot_radius: 0.2
-      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
-      obstacle_layer:
-        plugin: "pb_nav2_costmap_2d::IntensityObstacleLayer"
-        enabled: True
-        footprint_clearing_enabled: True
-        min_obstacle_intensity: 0.1
-        max_obstacle_intensity: 2.0
-        observation_sources: terrain_map
-        terrain_map:
-          topic: /terrain_map
-          clearing: True
-          marking: True
-          data_type: "PointCloud2"
-          min_obstacle_height: 0.0
-          max_obstacle_height: 2.0
-          obstacle_max_range: 5.0
-          obstacle_min_range: 0.2
-          raytrace_max_range: 8.0
-          raytrace_min_range: 0.2
-      static_layer:
-        plugin: "nav2_costmap_2d::StaticLayer"
-        map_subscribe_transient_local: True
-      inflation_layer:
-        plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 4.0
-        inflation_radius: 0.7
-      always_send_full_costmap: True
-```
-
-#### 2.2.2 IntensityVoxelLayer
-
-`IntensityVoxelLayer` 类似于 [IntensityObstacleLayer](#221-intensityobstaclelayer)，但使用 3D 体素网格来存储数据。
-
-**Parameters:**
-
-Common to [costmap-plugins/voxel.html](https://docs.nav2.org/configuration/packages/costmap-plugins/voxel.html)。
-
-主要区别在于添加了 `min_obstacle_intensity` 和 `max_obstacle_intensity` 参数，注意此参数使用域在 `voxel_layer` 下，而非 `observation_sources` 下。
-
-**Example:**
-
-```yaml
-local_costmap:
-  local_costmap:
-    ros__parameters:
-      use_sim_time: true
-      update_frequency: 10.0
-      publish_frequency: 10.0
-      global_frame: odom
-      robot_base_frame: gimbal_yaw_fake
-      rolling_window: true
-      width: 5
-      height: 5
-      resolution: 0.05
-      robot_radius: 0.2
-      plugins: ["static_layer", "voxel_layer", "inflation_layer"]
-      voxel_layer:
-        plugin: "pb_nav2_costmap_2d::IntensityVoxelLayer"
-        enabled: True
-        footprint_clearing_enabled: True
-        min_obstacle_intensity: 0.1
-        max_obstacle_intensity: 2.0
-        z_voxels: 10
-        origin_z: 0.0
-        z_resolution: 0.2
-        unknown_threshold: 15
-        mark_threshold: 0
+      plugins: ["static_layer", "intensity_voxel_layer", "inflation_layer"]
+      intensity_voxel_layer:
+        plugin: pb_nav2_costmap_2d::IntensityVoxelLayer
+        enabled: true
+        track_unknown_space: true
+        footprint_clearing_enabled: true
+        publish_voxel_map: false
         combination_method: 1
-        publish_voxel_map: False
+        mark_threshold: 0
+        origin_z: 0.0
+        unknown_threshold: 5
+        z_resolution: 0.05
+        z_voxels: 16
+        min_obstacle_height: 0.0
+        max_obstacle_height: 2.0
+        min_obstacle_intensity: 0.1
+        max_obstacle_intensity: 2.0
         observation_sources: terrain_map
         terrain_map:
+          data_type: PointCloud2
           topic: /terrain_map
-          marking: True
-          clearing: True
-          data_type: "PointCloud2"
           min_obstacle_height: 0.0
           max_obstacle_height: 2.0
           obstacle_max_range: 5.0
           obstacle_min_range: 0.2
-          raytrace_max_range: 8.0
-          raytrace_min_range: 0.2
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
@@ -183,11 +127,11 @@ local_costmap:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 4.0
         inflation_radius: 0.7
-      always_send_full_costmap: True
+      always_send_full_costmap: False
 ```
 
 ## Acknowledgements
 
-The Initial Developer of some parts of the repository (`BackUpFreeSpace`, `IntensityObstacleLayer`, `IntensityVoxelLayer`), which are copied from, derived from, or
+The Initial Developer of some parts of the repository (`BackUpFreeSpace`, `IntensityVoxelLayer`, `IntensityVoxelLayer`), which are copied from, derived from, or
 inspired by @PolarisXQ [SCURM_SentryNavigation](https://github.com/PolarisXQ/SCURM_SentryNavigation/tree/master/nav2_plugins/behavior_ext_plugins), @ros-navigation [navigation2](https://github.com/ros-navigation).
 All Rights Reserved.
