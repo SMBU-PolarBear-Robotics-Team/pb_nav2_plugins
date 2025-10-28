@@ -50,7 +50,6 @@ public:
     double * max_x, double * max_y) override;
 
   void updateOrigin(double new_origin_x, double new_origin_y) override;
-  bool isDiscretized() { return true; }
   void matchSize() override;
   void reset() override;
   bool isClearable() override { return false; }
