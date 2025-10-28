@@ -23,10 +23,10 @@ ament_auto_add_library(layers SHARED
 )
 
 if(BUILD_TESTING)
-set(ament_cmake_clang_format_CONFIG_FILE "${CMAKE_SOURCE_DIR}/.clang-format")
-set(ament_cmake_clang_tidy_CONFIG_FILE "${CMAKE_SOURCE_DIR}/.clang-tidy")
-find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+  set(ament_cmake_clang_format_CONFIG_FILE "${CMAKE_SOURCE_DIR}/.clang-format")
+  set(ament_cmake_clang_tidy_CONFIG_FILE "${CMAKE_SOURCE_DIR}/.clang-tidy")
+  find_package(ament_lint_auto REQUIRED)
+    ament_lint_auto_find_test_dependencies()
 endif()
 
 pluginlib_export_plugin_description_file(nav2_core behavior_plugin.xml)
