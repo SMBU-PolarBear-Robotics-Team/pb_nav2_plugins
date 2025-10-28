@@ -38,7 +38,7 @@ pull_request_rules:
     conditions:
       - base=main
       - or:
-        - "check-failure=build-and-test"
+        - "check-failure=build_and_test"
     actions:
         comment:
           message: |
