@@ -38,24 +38,24 @@ class IntensityVoxelLayer : public nav2_costmap_2d::ObstacleLayer
 public:
   IntensityVoxelLayer() : voxel_grid_(0, 0, 0)
   {
-    costmap_ = NULL;  // this is the unsigned char* member of parent class's parent class Costmap2D.
+    // this is the unsigned char* member of parent class's parent class Costmap2D.
+    costmap_ = nullptr;
   }
 
-  virtual ~IntensityVoxelLayer();
+  ~IntensityVoxelLayer() override;
 
-  virtual void onInitialize();
-  virtual void updateBounds(
+  void onInitialize() override;
+  void updateBounds(
     double robot_x, double robot_y, double robot_yaw, double * min_x, double * min_y,
-    double * max_x, double * max_y);
+    double * max_x, double * max_y) override;
 
-  void updateOrigin(double new_origin_x, double new_origin_y);
-  bool isDiscretized() { return true; }
-  virtual void matchSize();
-  virtual void reset();
-  virtual bool isClearable() { return false; }
+  void updateOrigin(double new_origin_x, double new_origin_y) override;
+  void matchSize() override;
+  void reset() override;
+  bool isClearable() override { return false; }
 
 protected:
-  virtual void resetMaps();
+  void resetMaps() override;
   void updateFootprint(
     double robot_x, double robot_y, double robot_yaw, double * min_x, double * min_y,
     double * max_x, double * max_y);
